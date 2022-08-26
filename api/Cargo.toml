@@ -1,0 +1,20 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hyper = { version = "0.14", features = ["full"] }
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+axum = "0.5.15"
+tower = "0.4.13"
+fred = "5.1.0"
+
+redis = { version = "0.21.5", features = ["tokio-comp", "cluster"] }
+mobc = "0.7.3"
+mobc-redis = "0.7.0"
+mobc-redis-cluster = "0.1.1"
+
