@@ -1,0 +1,23 @@
+{
+  "name": "iv-automation",
+  "version": "1.0.0",
+  "description": "this shell package handles automations for the iv system",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cube-drone/iv.git"
+  },
+  "author": "",
+  "license": "AGPLv3",
+  "bugs": {
+    "url": "https://github.com/cube-drone/iv/issues"
+  },
+  "homepage": "https://github.com/cube-drone/iv#readme",
+  "dependencies": {
+    "ioredis": "^5.2.3",
+    "jake": "^10.8.5"
+  }
+}

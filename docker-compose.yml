@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  redis-cluster-1:
+    image: bitnami/redis-cluster
+    ports:
+      - 41001:6379
+    environment:
+      - REDIS_PASSWORD=four
+      - REDIS_AOF_ENABLED=no
+      - REDIS_NODES="redis-cluster-1 redis-cluster-2 redis-cluster-3"
+  redis-cluster-2:
+    image: bitnami/redis-cluster
+    ports:
+      - 41002:6379
+    environment:
+      - REDIS_PASSWORD=four
+      - REDIS_AOF_ENABLED=no
+      - REDIS_NODES="redis-cluster-1 redis-cluster-2 redis-cluster-3"
+  redis-cluster-3:
+    image: bitnami/redis-cluster
+    ports:
+      - 41003:6379
+    depends_on:
+      - redis-cluster-1
+      - redis-cluster-2
+    environment:
+      - REDIS_PASSWORD=four
+      - REDISCLI_AUTH=four
+      - REDIS_CLUSTER_REPLICAS=1
+      - REDIS_AOF_ENABLED=no
+      - REDIS_NODES="redis-cluster-1 redis-cluster-2 redis-cluster-3"
+      - REDIS_CLUSTER_CREATOR=yes
