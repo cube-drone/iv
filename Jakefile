@@ -14,22 +14,23 @@ task('dockerup', dockerup);
 
 desc('Test backing services for awakeness');
 const test_connect = async () => {
-    let Redis = require('ioredis');
+    let {createCluster} = require('redis');
     try{
-        let cluster = new Redis.Cluster([
-            {
-                port: 41001,
-                host: '127.0.0.1'
-            },
-            {
-                port: 41002,
-                host: '127.0.0.1'
-            },
-            {
-                port: 41003,
-                host: '127.0.0.1'
-            },
-        ]);
+        let ports = [41000, 41001, 41002, 41003, 41004, 41005];
+        //let ports = [123, 234, 345];
+
+        const cluster = createCluster({
+            rootNodes: ports.map(port => {return {
+                url: `redis://:bitnami@127.0.0.1:${port}`,
+            }}),
+        });
+        
+        cluster.on('error', (err) => {
+            console.error(err);
+            throw err;
+        });
+        
+        await cluster.connect();
 
         await cluster.set("test", "ahoy");
         let result = await cluster.get("test");

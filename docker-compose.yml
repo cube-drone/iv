@@ -1,32 +1,84 @@
 version: "3.9"
 services:
-  redis-cluster-1:
-    image: bitnami/redis-cluster
+  redis-node-0:
+    image: docker.io/bitnami/redis-cluster:7.0
     ports:
-      - 41001:6379
+      - "41000:6379"
+    volumes:
+      - redis-cluster_data-0:/bitnami/redis/data
     environment:
-      - REDIS_PASSWORD=four
-      - REDIS_AOF_ENABLED=no
-      - REDIS_NODES="redis-cluster-1 redis-cluster-2 redis-cluster-3"
-  redis-cluster-2:
-    image: bitnami/redis-cluster
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-1:
+    image: docker.io/bitnami/redis-cluster:7.0
     ports:
-      - 41002:6379
+      - "41001:6379"
+    volumes:
+      - redis-cluster_data-1:/bitnami/redis/data
     environment:
-      - REDIS_PASSWORD=four
-      - REDIS_AOF_ENABLED=no
-      - REDIS_NODES="redis-cluster-1 redis-cluster-2 redis-cluster-3"
-  redis-cluster-3:
-    image: bitnami/redis-cluster
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-2:
+    image: docker.io/bitnami/redis-cluster:7.0
     ports:
-      - 41003:6379
+      - "41002:6379"
+    volumes:
+      - redis-cluster_data-2:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-3:
+    image: docker.io/bitnami/redis-cluster:7.0
+    ports:
+      - "41003:6379"
+    volumes:
+      - redis-cluster_data-3:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-4:
+    image: docker.io/bitnami/redis-cluster:7.0
+    ports:
+      - "41004:6379"
+    volumes:
+      - redis-cluster_data-4:/bitnami/redis/data
+    environment:
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+
+  redis-node-5:
+    image: docker.io/bitnami/redis-cluster:7.0
+    ports:
+      - "41005:6379"
+    volumes:
+      - redis-cluster_data-5:/bitnami/redis/data
     depends_on:
-      - redis-cluster-1
-      - redis-cluster-2
+      - redis-node-0
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
     environment:
-      - REDIS_PASSWORD=four
-      - REDISCLI_AUTH=four
-      - REDIS_CLUSTER_REPLICAS=1
-      - REDIS_AOF_ENABLED=no
-      - REDIS_NODES="redis-cluster-1 redis-cluster-2 redis-cluster-3"
-      - REDIS_CLUSTER_CREATOR=yes
+      - 'REDIS_PASSWORD=bitnami'
+      - 'REDISCLI_AUTH=bitnami'
+      - 'REDIS_CLUSTER_REPLICAS=1'
+      - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
+      - 'REDIS_CLUSTER_CREATOR=yes'
+
+volumes:
+  redis-cluster_data-0:
+    driver: local
+  redis-cluster_data-1:
+    driver: local
+  redis-cluster_data-2:
+    driver: local
+  redis-cluster_data-3:
+    driver: local
+  redis-cluster_data-4:
+    driver: local
+  redis-cluster_data-5:
+    driver: local

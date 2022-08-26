@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/cube-drone/iv#readme",
   "dependencies": {
-    "ioredis": "^5.2.3",
-    "jake": "^10.8.5"
+    "jake": "^10.8.5",
+    "redis": "^4.3.0"
   }
 }
