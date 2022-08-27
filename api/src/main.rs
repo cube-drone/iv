@@ -1,4 +1,3 @@
-use std::time::Duration;
 use std::sync::Arc;
 
 use axum::{
@@ -7,71 +6,26 @@ use axum::{
     Router,
 };
 
-use mobc::async_trait;
-use mobc::{Pool, Connection, Manager};
-use redis::{ErrorKind, RedisError, AsyncCommands, RedisResult};
-use redis::cluster::{ClusterClient, ClusterConnection};
+use fred::prelude::{RedisError, RedisConfig, KeysInterface};
+use fred::pool::{RedisPool};
 
-pub struct RedisConnectionManager {
-    client: ClusterClient,
-}
+const CACHE_POOL_SIZE: usize = 2;
 
-impl RedisConnectionManager {
-    pub fn new(c: ClusterClient) -> Self {
-        Self { client: c }
-    }
-}
-
-pub type MobcPool = Pool<RedisConnectionManager>;
-pub type MobcCon = Connection<RedisConnectionManager>;
-
-#[async_trait]
-impl Manager for RedisConnectionManager {
-    type Connection = ClusterConnection;
-    type Error = RedisError;
-
-    async fn connect(&self) -> Result<Self::Connection, Self::Error> {
-        let c = self.client.get_connection()?;
-        Ok(c)
-    }
-
-    async fn check(&self, mut conn: Self::Connection) -> Result<Self::Connection, Self::Error> {
-        let pong: String = redis::cmd("PING").query_async(&mut conn).await?;
-        if pong.as_str() != "PONG" {
-            return Err((ErrorKind::ResponseError, "pong response error").into());
-        }
-        Ok(conn)
-    }
-}
-
-const CACHE_POOL_MAX_OPEN: u64 = 16;
-const CACHE_POOL_MAX_IDLE: u64 = 8;
-const CACHE_POOL_TIMEOUT_SECONDS: u64 = 1;
-const CACHE_POOL_EXPIRE_SECONDS: u64 = 60;
-
-pub async fn connect() -> Result<MobcPool, RedisError> {
-    let nodes = vec![
-        "redis://:bitnami@127.0.0.1:41000/", 
-        "redis://:bitnami@127.0.0.1:41001/", 
-        "redis://:bitnami@127.0.0.1:41002/", 
-        "redis://:bitnami@127.0.0.1:41003/", 
-        "redis://:bitnami@127.0.0.1:41004/", 
-        "redis://:bitnami@127.0.0.1:41005/"];
-    let client = ClusterClient::open(nodes).unwrap();
-    let manager = RedisConnectionManager::new(client);
-    Ok(Pool::builder()
-        .get_timeout(Some(Duration::from_secs(CACHE_POOL_TIMEOUT_SECONDS)))
-        .max_open(CACHE_POOL_MAX_OPEN)
-        .max_idle(CACHE_POOL_MAX_IDLE)
-        .max_lifetime(Some(Duration::from_secs(CACHE_POOL_EXPIRE_SECONDS)))
-        .build(manager))
+pub async fn connect() -> Result<RedisPool, RedisError> {
+    let config = RedisConfig::from_url("redis-cluster://bitnami@127.0.0.1:41000?127.0.0.1:41001?127.0.0.1:41002?127.0.0.1:41003?127.0.0.1:41004?127.0.0.1:41005")?;
+    //redis|rediss[-cluster] :// [[username:]password@] host [:port][?[node=host1:port1][&node=host2:port2][&node=hostN:portN]]
+    let pool = RedisPool::new(config, CACHE_POOL_SIZE)?;
+    let _ = pool.connect(None);
+    let _ = pool.wait_for_connect().await?;
+  
+    Ok(pool)
 }
 
 #[tokio::main]
 async fn main() {
-    let connect_result: Result<MobcPool, RedisError> = connect().await;
+    let connect_result: Result<RedisPool, RedisError> = connect().await;
     let client = connect_result.unwrap();
-    let shared_pool = Arc::new(client);
+    let shared_pool: Arc<RedisPool> = Arc::new(client);
 
     // build our application with a single route
     let app = Router::new()
@@ -86,12 +40,18 @@ async fn main() {
 }
 
 async fn handler(
-    Extension(redis_pool): Extension<Arc<MobcPool>>,
+    Extension(redis_pool): Extension<Arc<RedisPool>>,
 ) -> String {
+    //let val:i32 = redis_pool.incr("counter").await.unwrap();
+
+    //format!("Counter!: {}", val)
+    /*
     let mut con:MobcCon = redis_pool.get().await.unwrap();
 
     let counter_res:RedisResult<i32> = con.incr("counter", 1i32).await;
     let counter = counter_res.unwrap();
 
     format!("Hit Counter: {}", counter)
+    */
+    String::from("Hello world")
 }

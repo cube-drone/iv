@@ -18,11 +18,18 @@ const test_connect = async () => {
     try{
         let ports = [41000, 41001, 41002, 41003, 41004, 41005];
         //let ports = [123, 234, 345];
+        let rootNodes = ports.map((port, i) => {return { url: `redis://:bitnami@127.0.0.1:${port}`}});
+        let nodeAddressMap = {};
+        ports.map((port,i) => {nodeAddressMap[`127.0.0.1:${port}`] = {
+            host: `redis-node-${i}`,
+            port
+        }});
+
+        console.dir(rootNodes);
 
         const cluster = createCluster({
-            rootNodes: ports.map(port => {return {
-                url: `redis://:bitnami@127.0.0.1:${port}`,
-            }}),
+            rootNodes,
+            nodeAddressMap,
         });
         
         cluster.on('error', (err) => {
