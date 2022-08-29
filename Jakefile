@@ -10,43 +10,4 @@ desc('Boot up all the backing services');
 const dockerup = async () => {
     await run('docker compose up -d')
 }
-task('dockerup', dockerup);
-
-desc('Test backing services for awakeness');
-const test_connect = async () => {
-    let {createCluster} = require('redis');
-    try{
-        let ports = [41000, 41001, 41002, 41003, 41004, 41005];
-        //let ports = [123, 234, 345];
-        let rootNodes = ports.map((port, i) => {return { url: `redis://:bitnami@127.0.0.1:${port}`}});
-        let nodeAddressMap = {};
-        ports.map((port,i) => {nodeAddressMap[`127.0.0.1:${port}`] = {
-            host: `redis-node-${i}`,
-            port
-        }});
-
-        console.dir(rootNodes);
-
-        const cluster = createCluster({
-            rootNodes,
-            nodeAddressMap,
-        });
-        
-        cluster.on('error', (err) => {
-            console.error(err);
-            throw err;
-        });
-        
-        await cluster.connect();
-
-        await cluster.set("test", "ahoy");
-        let result = await cluster.get("test");
-
-        console.log(`Ahoy ${result}`);
-    }
-    catch(err){
-        console.error(err);
-        return false;
-    }
-}
-task('test_connect', test_connect);
+task('start', dockerup);
