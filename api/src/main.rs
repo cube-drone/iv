@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::env;
 
 use axum::{
     extract::Extension,
@@ -14,7 +15,15 @@ use services::redis::connect_redis;
 
 #[tokio::main]
 async fn main() {
-    let connect_result: Result<RedisPool, RedisError> = connect_redis().await;
+    let redis_url = match env::var("IV_REDIS_URL") {
+        Ok(val) => val,
+        Err(_e) => String::from("redis://127.0.0.1:6379"),
+    };
+    let bind = match env::var("IV_BIND") {
+        Ok(val) => val,
+        Err(_e) => String::from("0.0.0.0:4000"),
+    };
+    let connect_result: Result<RedisPool, RedisError> = connect_redis(&redis_url).await;
     let client = connect_result.unwrap();
     let shared_pool: Arc<RedisPool> = Arc::new(client);
 
@@ -24,7 +33,7 @@ async fn main() {
         .layer(Extension(shared_pool));
 
     // run it with hyper on localhost:3000
-    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+    axum::Server::bind(&bind.parse().unwrap())
         .serve(app.into_make_service())
         .await
         .unwrap();
