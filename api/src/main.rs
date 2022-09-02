@@ -13,6 +13,10 @@ use fred::pool::{RedisPool};
 pub mod services;
 use services::redis::connect_redis;
 
+struct State{
+    redis_client: RedisPool,
+}
+
 #[tokio::main]
 async fn main() {
     let redis_url = match env::var("IV_REDIS_URL") {
@@ -25,12 +29,14 @@ async fn main() {
     };
     let connect_result: Result<RedisPool, RedisError> = connect_redis(&redis_url).await;
     let client = connect_result.unwrap();
-    let shared_pool: Arc<RedisPool> = Arc::new(client);
+    let shared_state: Arc<State> = Arc::new(State {
+        redis_client: client,
+    });
 
     // build our application with a single route
     let app = Router::new()
         .route("/", get(handler))
-        .layer(Extension(shared_pool));
+        .layer(Extension(shared_state));
 
     // run it with hyper on localhost:3000
     axum::Server::bind(&bind.parse().unwrap())
@@ -40,9 +46,9 @@ async fn main() {
 }
 
 async fn handler(
-    Extension(redis_pool): Extension<Arc<RedisPool>>,
+    Extension(state): Extension<Arc<State>>,
 ) -> String {
-    let counter:i32 = redis_pool.incr("counter").await.unwrap();
+    let counter:i32 = state.redis_client.incr("counter").await.unwrap();
 
     format!("Hit Counter: {}", counter)
 }
