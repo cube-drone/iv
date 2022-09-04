@@ -9,10 +9,12 @@ task('default', async function(){
 desc('Boot up all the backing services');
 const dockerup = async () => {
     await run('docker compose up -d')
-    let redisUrl = 'redis://four@127.0.0.1:41001';
+    let redisPrimeUrl = 'redis://four@127.0.0.1:41001';
+    let redisLocalUrl = 'redis://four@127.0.0.1:41002';
 
     await run('cd api && cargo run', {
-        IV_REDIS_URL: redisUrl,
+        IV_REDIS_LOCAL_URL: redisLocalUrl,
+        IV_REDIS_PRIME_URL: redisPrimeUrl,
         IV_BIND: '0.0.0.0:3000',
     });
 }

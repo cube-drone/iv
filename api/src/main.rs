@@ -6,20 +6,22 @@ use axum::{
     routing::get,
     Router,
 };
+use axum::http::StatusCode;
 
 use fred::prelude::{RedisError, KeysInterface};
 use fred::pool::{RedisPool};
 
 pub mod services;
 use services::redis::connect_redis;
-
-struct State{
-    redis_client: RedisPool,
-}
+use services::Services;
 
 #[tokio::main]
 async fn main() {
-    let redis_url = match env::var("IV_REDIS_URL") {
+    let redis_local_url = match env::var("IV_REDIS_LOCAL_URL") {
+        Ok(val) => val,
+        Err(_e) => String::from("redis://127.0.0.1:6379"),
+    };
+    let redis_prime_url = match env::var("IV_REDIS_PRIME_URL") {
         Ok(val) => val,
         Err(_e) => String::from("redis://127.0.0.1:6379"),
     };
@@ -27,15 +29,22 @@ async fn main() {
         Ok(val) => val,
         Err(_e) => String::from("0.0.0.0:4000"),
     };
-    let connect_result: Result<RedisPool, RedisError> = connect_redis(&redis_url).await;
+    
+    let connect_result: Result<RedisPool, RedisError> = connect_redis(&redis_local_url).await;
     let client = connect_result.unwrap();
-    let shared_state: Arc<State> = Arc::new(State {
-        redis_client: client,
+    
+    let connect_result: Result<RedisPool, RedisError> = connect_redis(&redis_prime_url).await;
+    let client_prime = connect_result.unwrap();
+
+    let shared_state: Arc<Services> = Arc::new(Services {
+        local_redis_client: client,
+        prime_redis_client: client_prime,
     });
 
     // build our application with a single route
     let app = Router::new()
         .route("/", get(handler))
+        .route("/identify", get(identify))
         .layer(Extension(shared_state));
 
     // run it with hyper on localhost:3000
@@ -46,9 +55,25 @@ async fn main() {
 }
 
 async fn handler(
-    Extension(state): Extension<Arc<State>>,
+    Extension(state): Extension<Arc<Services>>,
 ) -> String {
-    let counter:i32 = state.redis_client.incr("counter").await.unwrap();
+    let counter:i32 = state.local_redis_client.incr("counter").await.unwrap();
 
     format!("Hit Counter: {}", counter)
+}
+
+async fn identify(
+    Extension(state): Extension<Arc<Services>>,
+) -> Result<String, StatusCode> {
+    // hitting "identify" with no args creates a blank identity
+
+    let counter:i32 = match state.local_redis_client.incr("counter").await{
+        Ok(counter) => counter,
+        Err(_e) => {
+            // log here
+            return Err(StatusCode::INTERNAL_SERVER_ERROR)
+        },
+    };
+
+    Ok(format!("Hit Counter: {}", counter))
 }
