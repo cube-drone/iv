@@ -56,22 +56,23 @@ async fn main() {
 
 async fn handler(
     Extension(state): Extension<Arc<Services>>,
-) -> String {
-    let counter:i32 = state.local_redis_client.incr("counter").await.unwrap();
+) -> Result<String, (StatusCode, String)> {
+    //let counter:i32 = state.local_redis_client.incr("counter").await.unwrap();
 
-    format!("Hit Counter: {}", counter)
+    //format!("Hit Counter: {}", counter)
+    Err((StatusCode::NOT_FOUND, String::from("dave's not here man")))
 }
 
 async fn identify(
     Extension(state): Extension<Arc<Services>>,
-) -> Result<String, StatusCode> {
+) -> Result<String, (StatusCode, String)> {
     // hitting "identify" with no args creates a blank identity
 
     let counter:i32 = match state.local_redis_client.incr("counter").await{
         Ok(counter) => counter,
         Err(_e) => {
             // log here
-            return Err(StatusCode::INTERNAL_SERVER_ERROR)
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, String::from("Critical redis error!")))
         },
     };
 
