@@ -16,6 +16,7 @@ const dockerup = async () => {
         IV_REDIS_LOCAL_URL: redisLocalUrl,
         IV_REDIS_PRIME_URL: redisPrimeUrl,
         IV_BIND: '0.0.0.0:3000',
+        RUST_LOG: 'info',
     });
 }
 task('start', dockerup);
